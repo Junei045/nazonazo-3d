@@ -1,0 +1,28 @@
+/*
+ * Cloudscape establishes its own typography (Open Sans), color, and spacing
+ * baseline through "@cloudscape-design/global-styles/index.css", imported in
+ * app/layout.tsx. Keep this file minimal: only the host-page wiring Cloudscape
+ * needs (full-height root so AppLayout can fill the viewport) plus the page
+ * background token. Do not override Cloudscape component styling here.
+ */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-background-layout-main-q409pi, #f2f3f3);
+}
+
+body.awsui-dark-mode {
+  background-color: var(--color-background-layout-main-q409pi, #0f1b2a);
+}
+
+/* Next.js App Router mounts content into this wrapper; let it fill height. */
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+  height: 100%;
+}
