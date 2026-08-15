@@ -65,7 +65,8 @@ export function RiddleGame({ riddles: RIDDLES }: { riddles: Riddle[] }) {
   const speakTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 音声合成（Web Speech API）で問題文を読み上げる
-  const speak = useCallback((text: string) => {
+  // keepMood: true にすると、読み上げ中も現在の表情（正解/不正解の色）を保ったままにする
+  const speak = useCallback((text: string, options?: { keepMood?: boolean }) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
     window.speechSynthesis.cancel()
     const utter = new SpeechSynthesisUtterance(text)
@@ -75,8 +76,10 @@ export function RiddleGame({ riddles: RIDDLES }: { riddles: Riddle[] }) {
     const voices = window.speechSynthesis.getVoices()
     const jaVoice = voices.find((v) => v.lang.startsWith('ja'))
     if (jaVoice) utter.voice = jaVoice
-    utter.onstart = () => setMood('speaking')
-    utter.onend = () => setMood((m) => (m === 'speaking' ? 'idle' : m))
+    if (!options?.keepMood) {
+      utter.onstart = () => setMood('speaking')
+    }
+    utter.onend = () => setMood((m) => (options?.keepMood ? 'idle' : m === 'speaking' ? 'idle' : m))
     window.speechSynthesis.speak(utter)
   }, [])
 
@@ -104,9 +107,9 @@ export function RiddleGame({ riddles: RIDDLES }: { riddles: Riddle[] }) {
     if (!solvedIds.includes(riddle.id)) {
       setSolvedIds((ids) => [...ids, riddle.id])
     }
-    speak(`こたえは ${riddle.answers[0]} でした。`)
+    speak(`こたえは ${riddle.answers[0]} でした。`, { keepMood: true })
     if (speakTimer.current) clearTimeout(speakTimer.current)
-    speakTimer.current = setTimeout(() => setMood('idle'), 2600)
+    speakTimer.current = setTimeout(() => setMood('idle'), 3200)
   }, [riddle, solvedIds, speak])
 
   const handleSubmit = useCallback(() => {
@@ -122,9 +125,9 @@ export function RiddleGame({ riddles: RIDDLES }: { riddles: Riddle[] }) {
         setScore((s) => s + 1)
         setSolvedIds((ids) => [...ids, riddle.id])
       }
-      speak(`せいかい！ こたえは ${riddle.answers[0]} でした。`)
+      speak(`せいかい！ こたえは ${riddle.answers[0]} でした。`, { keepMood: true })
       if (speakTimer.current) clearTimeout(speakTimer.current)
-      speakTimer.current = setTimeout(() => setMood('idle'), 2600)
+      speakTimer.current = setTimeout(() => setMood('idle'), 3200)
       return
     }
 
@@ -133,15 +136,15 @@ export function RiddleGame({ riddles: RIDDLES }: { riddles: Riddle[] }) {
     setWrongCount(nextWrong)
     if (nextWrong >= MAX_WRONG) {
       setMood('wrong')
-      speak(`ざんねん、${MAX_WRONG}回まちがえました。こたえは ${riddle.answers[0]} です。`)
+      speak(`ざんねん、${MAX_WRONG}回まちがえました。こたえは ${riddle.answers[0]} です。`, { keepMood: true })
       if (speakTimer.current) clearTimeout(speakTimer.current)
-      speakTimer.current = setTimeout(() => reveal(), 1800)
+      speakTimer.current = setTimeout(() => reveal(), 3200)
     } else {
       setPhase('wrong')
       setMood('wrong')
-      speak('ざんねん、はずれです。もう一度かんがえてみよう。')
+      speak('ざんねん、はずれです。もう一度かんがえてみよう。', { keepMood: true })
       if (speakTimer.current) clearTimeout(speakTimer.current)
-      speakTimer.current = setTimeout(() => setMood('idle'), 2200)
+      speakTimer.current = setTimeout(() => setMood('idle'), 3200)
     }
   }, [phase, answer, riddle, solvedIds, wrongCount, speak, reveal])
 
